@@ -1,6 +1,5 @@
 from Trie import Trie, TrieNode, TrieData
 
-
 def main():
     # Initialize the Trie
     trie = Trie()
@@ -61,7 +60,7 @@ def main():
 
     # 6. Test `read_in_dictionary` Method (Optional depending on input file)
     print("\nTesting `read_in_dictionary` method...")
-    file_name = "dictionary.txt"  # Update to the path of the dictionary file, if available
+    file_name = "Data/word-freq-grow.txt"  # Update to the path of the dictionary file, if available
     try:
         dictionary_trie = Trie.read_in_dictionary(file_name)
         print(f"Dictionary loaded successfully from {file_name}!")

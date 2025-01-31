@@ -1,4 +1,7 @@
-class TrieNode:
+# periodictable version 2.0 - https://periodictable.readthedocs.io/
+import periodictable
+
+class ElementNode:
 
     def __init__(self):
         self.children = {}
@@ -18,21 +21,44 @@ class TrieNode:
         self.data.append(data)
 
 
-class TrieData:
-    def __init__(self, frequency):
-        self.frequency = frequency
-        self.rank = None
+class Compound:
+    def __init__(self, mass, number=0, symbol="TBA", name="TBA", formula="TBA"):
+        self.number = number
+        self.symbol = symbol
+        self.name = name
+        self.mass = mass
+        self.formula = formula
 
-    def set_rank(self, rank):
-        self.rank = rank
+    def set_number(self, number):
+        self.number = number
 
-    def get_frequency(self):
-        return self.frequency
+    def set_mass(self, mass):
+        self.mass = mass
 
+    def get_mass(self):
+        return self.mass
+
+    def get_symbol(self):
+        return self.symbol
+
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+
+    def set_formula(self, formula):
+        self.formula = formula
+
+    def get_formula(self):
+        return self.formula
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
 
 class Trie:
     def __init__(self):
-        self.root = TrieNode()
+        self.root = ElementNode()
 
     def insert(self, string, data):
         """
@@ -41,7 +67,7 @@ class Trie:
         node = self.root
         for char in string:
             if not node.contains_key(char):
-                node.add_child(char, TrieNode())
+                node.add_child(char, ElementNode())
             node = node.get_child(char)
         node.add_data(data)
         node.is_end = True
@@ -110,15 +136,14 @@ class Trie:
         top_word = None
 
         for word in words:
-            frequency = self.get(word).data[0].get_frequency()  # Assuming data[0] has frequency
-            if frequency > max_freq:
-                max_freq = frequency
+            mass = self.get(word).data[0].get_mass()  # Assuming data[0] has mass
+            if mass > max_freq:
+                max_freq = mass
                 top_word = word
 
         return top_word
 
-    @staticmethod
-    def read_in_dictionary(file_name):
+    def read_in_dictionary(self, file_name):
         """
         Reads a dictionary from a file and inserts all words into the trie.
         """
@@ -127,14 +152,39 @@ class Trie:
             with open(file_name, 'r') as file:
                 for line in file:
                     try:
-                        rank, word, freq = line.split()
-                        rank = int(rank)
-                        freq = int(freq)
-                        data = TrieData(freq)
-                        data.set_rank(rank)
-                        trie.insert(word, data)
+                        number, symbol, name, mass, formula = line.split()
+                        number = int(number)
+                        symbol = symbol
+                        name = name
+                        mass = float(mass)
+                        formula = formula
+                        data = Compound(number, symbol, name, mass, formula)
+                        trie.insert(formula, data)
                     except ValueError:
                         continue  # Skip malformed lines
         except FileNotFoundError as e:
             print(f"Error: {e}")
         return trie
+
+def main():
+    # Initialize the Trie
+    trie = Trie()
+
+    # 6. Test `read_in_dictionary` Method (Optional depending on input file)
+    print("\nTesting `read_in_dictionary` method...")
+    file_name = "Data/elements_table_v20.txt"  # Update to the path of the dictionary file, if available
+    try:
+        trie = trie.read_in_dictionary(file_name)
+        print(f"Dictionary loaded successfully from {file_name}!")
+    except FileNotFoundError:
+        print(f"File {file_name} not found. Skipping this test.")
+
+    print(f"\nAll Formulas in Trie: {trie.get_words()}")
+    formua = "Na"
+    print(f"\nCompound Data in Trie {formua}: {trie.get_node(formua).data[0].symbol}, mass: {trie.get_node(formua).data[0].mass}")
+    print("\nAll tests completed!")
+
+
+# Call the main function to run the tests
+if __name__ == "__main__":
+    main()
