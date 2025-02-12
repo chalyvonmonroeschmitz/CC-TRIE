@@ -1,5 +1,5 @@
 import math
-import numpy
+import CC_Trie
 from CC_Trie import Trie
 
 
@@ -59,33 +59,33 @@ def main():
     # Initialize the Trie
     trie = Trie()
 
-    # 6. Test `read_in_dictionary` Method (Optional depending on input file)
-    print("\nTesting `read_in_dictionary` method...")
-    file_name = "Data/elements_table_v20.txt"  # Update to the path of the dictionary file, if available
+    # Load element data from file (Update file path accordingly)
+    file_name = "Data/elements_table_v20.txt"
     try:
         trie = trie.read_in_dictionary(file_name)
-        print(f"Dictionary loaded successfully from {file_name}!")
-        print(f"{trie.get_words()}")
+
+        # Get all elements from the trie
+        elements = trie.get_words()
+
+        # Define x, y, z
+        x = elements[0] if elements else None  # Starting element (e.g., first from the list)
+        y = "H"  # Example element to sum recursively
+        z = "O"  # Another example element to sum recursively
+
+        if x is None:
+            print("No valid elements found in the Trie.")
+            return
+
+        # Create summation matrix
+        matrix = CC_Trie.create_summation_matrix(trie, elements, x, y, z)
+
+        # Plot the resulting matrix
+        CC_Trie.plot_matrix(matrix, elements)
+        # compute sum tables x y z elements
+        CC_Trie.compute_and_plot_sum_tables(elements)
+
     except FileNotFoundError:
-        print(f"File {file_name} not found. Skipping this test.")
-
-# Create Trie and populate it
-    trie = EnhancedTrieWithGraph()
-    trie.insert("abc", {"d": [1, 1, 1], "i": [2, 2, 2], "h": [3, 3, 3]})
-    trie.insert("abd", {"d": [4, 4, 4], "i": [0, 0, 0], "h": [1, 1, 1]})
-    trie.insert("abe", {"d": [2, 2, 2], "i": [1, 1, 1], "h": [1, 1, 1]})
-    trie.insert("xyz", {"d": [0, 0, 0], "i": [0, 0, 0], "h": [0, 0, 0]})  # Non-matching
-
-# Generate and print the matrix graph
-    matrix_graph = trie.get_matrice_graph_with_results()
-
-    for node, details in matrix_graph.items():
-        print(f"Node: {node}")
-        print(f"  Connections: {details['connections']}")
-        print(f"  Results:")
-        for result in details["results"]:
-            print(f"    -> Child: {result['child']}, Formula Result: {result['formula_result']:.6f}")
-
+        print(f"File {file_name} not found. Please provide a valid file path.")
 
 # Call the main function to run the tests
 if __name__ == "__main__":

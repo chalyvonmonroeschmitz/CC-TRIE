@@ -1,5 +1,4 @@
 # periodictable version 2.0 - https://periodictable.readthedocs.io/
-import periodictable
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -296,6 +295,11 @@ def plot_matrix(matrix, elements):
     plt.show()
     plt.close()
 
+
+"""
+This function will run for a prolonged period of time to display every element and it's corresponding 3 dimensional mass
+Advisable to use the find the sum of a specific element
+"""
 def compute_and_plot_sum_tables(elements):
     """
     Computes the sum of element x, y, and z and displays the sum values
@@ -336,6 +340,45 @@ def compute_and_plot_sum_tables(elements):
         plt.show()
         plt.close()
 
+
+def plot_sum_for_single_element_x(elements, x_element):
+    """
+    Plots the summation values for a single element x in the 3D table x, y, z.
+
+    Args:
+        elements: A list of element names.
+        x_element: The specific element name to be plotted.
+    """
+    # Assign numeric values to each element
+    element_values = np.arange(1, len(elements) + 1)
+    x_index = elements.index(x_element)
+
+    # Create an empty 2D matrix to store sums for each combination of y, z with fixed x
+    n = len(elements)
+    sum_matrix = np.zeros((n, n))
+
+    # Compute the summation table for the fixed x combination with y, z
+    for y in range(n):
+        for z in range(n):
+            sum_matrix[y, z] = element_values[x_index] + element_values[y] + element_values[z]
+
+    # Plot the 2D sum table for the fixed x value
+    plt.figure(figsize=(64, 64))
+    plt.title(f"Sum Matrix for x={x_element} (Value={element_values[x_index]})", fontsize=16, pad=20)
+    sns.heatmap(sum_matrix, cmap='rainbow', annot=True, fmt='.0f', cbar_kws={'label': 'Summation Value'},
+                square=True, linewidths=0.5, linecolor='white')
+
+    # Set up axis labels
+    plt.xticks(ticks=np.arange(n) + 0.5, labels=elements, fontsize=10, rotation=45, ha='right')
+    plt.yticks(ticks=np.arange(n) + 0.5, labels=elements, fontsize=10)
+    plt.xlabel("z Element (Columns)", fontsize=12, labelpad=10)
+    plt.ylabel("y Element (Rows)", fontsize=12, labelpad=10)
+
+    # Add spacing and show the plot
+    plt.tight_layout(pad=4)
+    plt.show()
+    plt.close()
+
 def main():
     # Initialize the Trie
     trie = Trie()
@@ -349,9 +392,9 @@ def main():
         elements = trie.get_words()
 
         # Define x, y, z
-        x = elements[0] if elements else None  # Starting element (e.g., first from the list)
+        x = trie.get_node("He").data[0].symbol if elements else None  # Starting element (e.g., first from the list)
         y = "H"  # Example element to sum recursively
-        z = "O"  # Another example element to sum recursively
+        z = "U"  # Another example element to sum recursively
 
         if x is None:
             print("No valid elements found in the Trie.")
@@ -359,11 +402,10 @@ def main():
 
         # Create summation matrix
         matrix = create_summation_matrix(trie, elements, x, y, z)
-
         # Plot the resulting matrix
         plot_matrix(matrix, elements)
-        # compute sum tables x y z elements
-        compute_and_plot_sum_tables(elements)
+        # compute sum tables x y z for element x
+        plot_sum_for_single_element_x(elements, x)
 
     except FileNotFoundError:
         print(f"File {file_name} not found. Please provide a valid file path.")
