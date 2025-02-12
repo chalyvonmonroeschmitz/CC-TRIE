@@ -1,5 +1,9 @@
 # periodictable version 2.0 - https://periodictable.readthedocs.io/
 import periodictable
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 class ElementNode:
 
@@ -22,7 +26,7 @@ class ElementNode:
 
 
 class Compound:
-    def __init__(self, mass, number=0, symbol="TBA", name="TBA", formula="TBA"):
+    def __init__(self, number=0, symbol="TBA", name="TBA", mass=float(0.00), formula="TBA"):
         self.number = number
         self.symbol = symbol
         self.name = name
@@ -166,25 +170,205 @@ class Trie:
             print(f"Error: {e}")
         return trie
 
+def plot_element_masses(trie):
+    """
+    Plots a Cartesian graph of chemical elements and their corresponding masses.
+    """
+    elements = trie.get_words()  # Get all element formulas from the trie
+    element_masses = {}
+
+    # Sum up masses for each element
+    for e in elements:
+        node = trie.get(e)
+        if node and node.data:  # Ensure the node has data
+            total_mass = sum(compound.get_mass() for compound in node.data)
+            element_masses[e] = total_mass
+
+    # Sort elements alphabetically for better visualization
+    sorted_elements = sorted(element_masses.keys())
+    sorted_masses = [element_masses[element] for element in sorted_elements]
+
+    # Plot the Cartesian graph
+    plt.figure(figsize=(12, 6))
+    plt.bar(sorted_elements, sorted_masses, color='skyblue')
+    plt.xlabel('Element Formula', fontsize=12)
+    plt.ylabel('Total Mass', fontsize=12)
+    plt.title('Element Mass Distribution', fontsize=14)
+    plt.xticks(rotation=90, fontsize=10)
+    plt.tight_layout()
+    plt.show()
+    plt.close()
+
+
+def create_summation_matrix(trie, elements, x, y, z):
+    """
+    Creates a matrix where each cell contains the recursive summation of the starting element `x`
+    and adds up all instances of elements `y` and `z` recursively.
+
+    Args:
+        trie: The Trie instance containing element data.
+        elements: A list of all element formulae in the trie.
+        x: Starting element.
+        y: First element to add recursively.
+        z: Second element to add recursively.
+
+    Returns:
+        A numpy 2D array (matrix) with the calculated sums.
+    """
+    size = len(elements)
+    matrix = np.zeros((size, size))  # Create an empty square matrix
+
+    for i, xi in enumerate(elements):  # Iterate over rows (elements as starting points)
+        for j, xj in enumerate(elements):  # Iterate over columns (elements to sum)
+            # Perform recursive summation
+            matrix[i, j] = recursive_sum(trie, xi, xj, y, z)
+
+    return matrix
+
+
+def recursive_sum(trie, start, current, y, z, depth=0):
+    """
+    Recursively sums up the specified elements `y` and `z` starting from `start` and `current`.
+    Limits recursion depth to avoid infinite loops.
+
+    Args:
+        trie: The Trie instance containing element data.
+        start: The starting element.
+        current: The current element being processed.
+        y: First element to add.
+        z: Second element to add.
+        depth: Current recursion depth.
+
+    Returns:
+        The recursive summation value.
+    """
+    # Limit recursion depth
+    if depth > 10:  # Prevent infinite recursion
+        return 0
+
+    node_start = trie.get(start)
+    node_current = trie.get(current)
+
+    if not node_start or not node_current:
+        return 0  # Element not found in Trie
+
+    # Calculate mass of current node's data
+    total_mass = 0
+    for compound in node_current.data:
+        total_mass += compound.get_mass()
+
+    # Recursive call for children `y` and `z`
+    sum_y = recursive_sum(trie, start, y, y, z, depth + 1)
+    sum_z = recursive_sum(trie, start, z, y, z, depth + 1)
+
+    return total_mass + sum_y + sum_z
+
+
+def plot_matrix(matrix, elements):
+    """
+    Plots the summation matrix as a heatmap using a ROYGBIV-like color spectrum, optimized for full-screen 1080p viewing,
+    with increased padding to ensure labels are spaced and clearly visible.
+
+    Args:
+        matrix: A 2D numpy array (matrix) containing the summation values.
+        elements: A list of element names corresponding to the matrix rows and columns.
+    """
+    plt.figure(figsize=(64, 64))  # Larger figure size for extra spacing (16:9 ratio)
+
+    # Heatmap visualization with updated ROYGBIV colormap ('rainbow')
+    plt.imshow(matrix, cmap='rainbow', interpolation='nearest')
+    cbar = plt.colorbar(label='Summation Value')  # Add the color bar
+
+    # Adjust tick labels for x and y axes with clearer spacing
+    plt.xticks(ticks=np.arange(len(elements)), labels=elements, rotation=75, ha='right', fontsize=12)
+    plt.yticks(ticks=np.arange(len(elements)), labels=elements, fontsize=12)
+
+    # Add axis labels and title with extra spacing
+    plt.xlabel('Element (Columns)', fontsize=16, labelpad=40)  # Increase label padding
+    plt.ylabel('Element (Rows)', fontsize=16, labelpad=40)
+    plt.title('Recursive Summation Matrix', fontsize=22, pad=50)  # Add extra padding to title
+
+    # Adjust layout to minimize overlap
+    plt.tight_layout(pad=8.0)  # Higher padding for tight layout
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)  # Adjust figure margins
+
+    # Display the matrix plot
+    plt.show()
+    plt.close()
+
+def compute_and_plot_sum_tables(elements):
+    """
+    Computes the sum of element x, y, and z and displays the sum values
+    in a table-like matrix for each combination of x, y, and z elements.
+
+    Args:
+        elements: A list of element names. The corresponding numeric values
+                  are assigned as sequential integers (e.g., 1, 2, 3, ...).
+    """
+    # Assign numeric values to each element
+    element_values = np.arange(1, len(elements) + 1)
+
+    # Create an empty 3D matrix to store sums for each combination of x, y, z
+    n = len(elements)
+    sum_matrix = np.zeros((n, n, n))
+
+    # Compute the summation table for all x, y, z combinations
+    for x in range(n):
+        for y in range(n):
+            for z in range(n):
+                sum_matrix[x, y, z] = element_values[x] + element_values[y] + element_values[z]
+
+    # Now plot the 2D sum table for each fixed z value
+    for z in range(n):
+        plt.figure(figsize=(64, 64))
+        plt.title(f"Sum Matrix for z={elements[z]} (Value={element_values[z]})", fontsize=16, pad=20)
+        sns.heatmap(sum_matrix[:, :, z], cmap='rainbow', annot=True, fmt='.0f', cbar_kws={'label': 'Summation Value'},
+                    square=True, linewidths=0.5, linecolor='white')
+
+        # Set up axis labels
+        plt.xticks(ticks=np.arange(n) + 0.5, labels=elements, fontsize=10, rotation=45, ha='right')
+        plt.yticks(ticks=np.arange(n) + 0.5, labels=elements, fontsize=10)
+        plt.xlabel("y Element (Columns)", fontsize=12, labelpad=10)
+        plt.ylabel("x Element (Rows)", fontsize=12, labelpad=10)
+
+        # Add spacing and show the plot
+        plt.tight_layout(pad=4)
+        plt.show()
+        plt.close()
+
 def main():
     # Initialize the Trie
     trie = Trie()
 
-    # 6. Test `read_in_dictionary` Method (Optional depending on input file)
-    print("\nTesting `read_in_dictionary` method...")
-    file_name = "Data/elements_table_v20.txt"  # Update to the path of the dictionary file, if available
+    # Load element data from file (Update file path accordingly)
+    file_name = "Data/elements_table_v20.txt"
     try:
         trie = trie.read_in_dictionary(file_name)
-        print(f"Dictionary loaded successfully from {file_name}!")
+
+        # Get all elements from the trie
+        elements = trie.get_words()
+
+        # Define x, y, z
+        x = elements[0] if elements else None  # Starting element (e.g., first from the list)
+        y = "H"  # Example element to sum recursively
+        z = "O"  # Another example element to sum recursively
+
+        if x is None:
+            print("No valid elements found in the Trie.")
+            return
+
+        # Create summation matrix
+        matrix = create_summation_matrix(trie, elements, x, y, z)
+
+        # Plot the resulting matrix
+        plot_matrix(matrix, elements)
+        # compute sum tables x y z elements
+        compute_and_plot_sum_tables(elements)
+
     except FileNotFoundError:
-        print(f"File {file_name} not found. Skipping this test.")
-
-    print(f"\nAll Formulas in Trie: {trie.get_words()}")
-    formua = "Na"
-    print(f"\nCompound Data in Trie {formua}: {trie.get_node(formua).data[0].symbol}, mass: {trie.get_node(formua).data[0].mass}")
-    print("\nAll tests completed!")
-
+        print(f"File {file_name} not found. Please provide a valid file path.")
 
 # Call the main function to run the tests
 if __name__ == "__main__":
+
     main()

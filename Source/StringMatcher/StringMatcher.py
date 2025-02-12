@@ -80,3 +80,20 @@ class StringMatcher:
         """
         Implements the Rabin-Karp algorithm
         """
+
+def main():
+    """
+    Main function to test the StringMatcherBF class.
+    """
+    text_file = open("Data/Frank.txt", 'r')
+
+    text = [text_file.read().strip()]
+    pattern = input("Enter the pattern to search for: ").strip()
+    matcher = StringMatcher()
+
+    print("\nBrute Force String Matching")
+    matches = matcher.naive_match(text[0], pattern)
+    print(f"Indices where pattern occurs: {matches}")
+
+if __name__ == "__main__":
+    main()
