@@ -1,0 +1,809 @@
+Chat 'ChatTitle(text=Element Summation Matrix Visualization, isCustom=true)' (6438419e-9c9e-43f9-96c4-3e8ad9e1ed2a)
+Context:
+
+Messages: 14
+===================================================================================================================
+
+User: 
+Please update to include a matrix table that begins with element x and ads up all elements y and elements z recursively plotting each sum in a matrix table or cartesian matrixAttachments:
+Attachment Name: Information about open file in the editor
+Attachments Kind: Visible
+Attachments Text:
+```python
+# periodictable version 2.0 - https://periodictable.readthedocs.io/
+import periodictable
+import matplotlib.pyplot as plt
+
+
+class ElementNode:
+
+    def __init__(self):
+        self.children = {}
+        self.is_end = False
+        self.data = []
+
+    def contains_key(self, char):
+        return char in self.children
+
+    def add_child(self, char, node):
+        self.children[char] = node
+
+    def get_child(self, char):
+        return self.children.get(char)
+
+    def add_data(self, data):
+        self.data.append(data)
+
+
+class Compound:
+    def __init__(self, number=0, symbol="TBA", name="TBA", mass=float(0.00), formula="TBA"):
+        self.number = number
+        self.symbol = symbol
+        self.name = name
+        self.mass = mass
+        self.formula = formula
+
+    def set_number(self, number):
+        self.number = number
+
+    def set_mass(self, mass):
+        self.mass = mass
+
+    def get_mass(self):
+        return self.mass
+
+    def get_symbol(self):
+        return self.symbol
+
+    def set_symbol(self, symbol):
+        self.symbol = symbol
+
+    def set_formula(self, formula):
+        self.formula = formula
+
+    def get_formula(self):
+        return self.formula
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+class Trie:
+    def __init__(self):
+        self.root = ElementNode()
+
+    def insert(self, string, data):
+        """
+        Inserts a string and returns the last node where the string ends.
+        """
+        node = self.root
+        for char in string:
+            if not node.contains_key(char):
+                node.add_child(char, ElementNode())
+            node = node.get_child(char)
+        node.add_data(data)
+        node.is_end = True
+        return node
+
+    def get_node(self, string):
+        """
+        Search for a prefix in the trie and return the final node it represents.
+        """
+        node = self.root
+        for char in string:
+            if node.contains_key(char):
+                node = node.get_child(char)
+            else:
+                return None
+        return node
+
+    def get(self, string):
+        """
+        Search for a complete word in the trie and return the final node,
+        if and only if it is marked as an end-of-word node.
+        """
+        node = self.get_node(string)
+        if node and node.is_end:
+            return node
+        return None
+
+    def starts_with(self, prefix):
+        """
+        Check if any words in the trie start with the given prefix.
+        """
+        return self.get_node(prefix) is not None
+
+    def get_words(self, prefix=""):
+        """
+        Retrieve a list of all words in the trie starting with a given prefix.
+        """
+        result = []
+        start_node = self.get_node(prefix)
+        if start_node:
+            self._add_all_words(start_node, prefix, result)
+        return result
+
+    def get_alphabetical_list_with_prefix(self, prefix):
+        """
+        Return an alphabetically sorted list of all words that begin with the given prefix.
+        """
+        return sorted(self.get_words(prefix))  # Sorting the words alphabetically
+
+    def _add_all_words(self, node, word, result):
+        """
+        Helper method to recursively add all words starting from a given node.
+        """
+        if node.is_end:
+            result.append(word)
+
+        for char, next_node in node.children.items():
+            self._add_all_words(next_node, word + char, result)
+
+    def get_most_frequent_word_with_prefix(self, prefix):
+        """
+        Finds the most frequently occurring word that starts with the given prefix.
+        """
+        words = self.get_words(prefix)
+        max_freq = -1
+        top_word = None
+
+        for word in words:
+            mass = self.get(word).data[0].get_mass()  # Assuming data[0] has mass
+            if mass > max_freq:
+                max_freq = mass
+                top_word = word
+
+        return top_word
+
+    def read_in_dictionary(self, file_name):
+        """
+        Reads a dictionary from a file and inserts all words into the trie.
+        """
+        trie = Trie()
+        try:
+            with open(file_name, 'r') as file:
+                for line in file:
+                    try:
+                        number, symbol, name, mass, formula = line.split()
+                        number = int(number)
+                        symbol = symbol
+                        name = name
+                        mass = float(mass)
+                        formula = formula
+                        data = Compound(number, symbol, name, mass, formula)
+                        trie.insert(formula, data)
+                    except ValueError:
+                        continue  # Skip malformed lines
+        except FileNotFoundError as e:
+            print(f"Error: {e}")
+        return trie
+
+def plot_element_masses(trie):
+    """
+    Plots a Cartesian graph of chemical elements and their corresponding masses.
+    """
+    elements = trie.get_words()  # Get all element formulas from the trie
+    element_masses = {}
+
+    # Sum up masses for each element
+    for e in elements:
+        node = trie.get(e)
+        if node and node.data:  # Ensure the node has data
+            total_mass = sum(compound.get_mass() for compound in node.data)
+            element_masses[e] = total_mass
+
+    # Sort elements alphabetically for better visualization
+    sorted_elements = sorted(element_masses.keys())
+    sorted_masses = [element_masses[element] for element in sorted_elements]
+
+    # Plot the Cartesian graph
+    plt.figure(figsize=(12, 6))
+    plt.bar(sorted_elements, sorted_masses, color='skyblue')
+    plt.xlabel('Element Formula', fontsize=12)
+    plt.ylabel('Total Mass', fontsize=12)
+    plt.title('Element Mass Distribution', fontsize=14)
+    plt.xticks(rotation=90, fontsize=10)
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    # Initialize the Trie
+    trie = Trie()
+
+    # Load element data from file (Update file path accordingly)
+    file_name = "Data/elements_table_v20.txt"  # Ensure this file exists with valid data
+    try:
+        trie = trie.read_in_dictionary(file_name)
+        plot_element_masses(trie)
+    except FileNotFoundError:
+        print(f"File {file_name} not found. Please provide a valid file path.")
+
+
+# Call the main function to run the tests
+if __name__ == "__main__":
+
+    main()
+
+```
+
+
+Assistant: 
+To enhance the functionality, we can introduce a matrix table that calculates and plots the recursive summation of specific elements (e.g., `y` and `z`) starting at `x` and generates a Cartesian matrix visualization. Below is an explanation of how to structure this feature and integrate it into the provided code.
+
+---
+
+### Updated Functionality
+1. **Matrix Population**:
+   - Each matrix cell value `(i, j)` will represent a recursive summation starting from a specific `x` and summing elements `y` and `z`, possibly iterating multiple levels through the trie.
+
+2. **Cartesian Matrix Table Plot**:
+   - A heatmap-like visualization to plot the Cartesian matrix, where matrix cell values are color-coded according to the summed values.
+
+---
+
+### Updated Code
+
+Here's the updated Python code that includes the functionality for creating the matrix and plotting it.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+def create_summation_matrix(trie, elements, x, y, z):
+    """
+    Creates a matrix where each cell contains the recursive summation of the starting element `x`
+    and adds up all instances of elements `y` and `z` recursively.
+    
+    Args:
+        trie: The Trie instance containing element data.
+        elements: A list of all element formulae in the trie.
+        x: Starting element.
+        y: First element to add recursively.
+        z: Second element to add recursively.
+    
+    Returns:
+        A numpy 2D array (matrix) with the calculated sums.
+    """
+    size = len(elements)
+    matrix = np.zeros((size, size))  # Create an empty square matrix
+
+    for i, xi in enumerate(elements):  # Iterate over rows (elements as starting points)
+        for j, xj in enumerate(elements):  # Iterate over columns (elements to sum)
+            # Perform recursive summation
+            matrix[i, j] = recursive_sum(trie, xi, xj, y, z)
+
+    return matrix
+
+
+def recursive_sum(trie, start, current, y, z, depth=0):
+    """
+    Recursively sums up the specified elements `y` and `z` starting from `start` and `current`.
+    Limits recursion depth to avoid infinite loops.
+
+    Args:
+        trie: The Trie instance containing element data.
+        start: The starting element.
+        current: The current element being processed.
+        y: First element to add.
+        z: Second element to add.
+        depth: Current recursion depth.
+    
+    Returns:
+        The recursive summation value.
+    """
+    # Limit recursion depth
+    if depth > 10:  # Prevent infinite recursion
+        return 0
+
+    node_start = trie.get(start)
+    node_current = trie.get(current)
+
+    if not node_start or not node_current:
+        return 0  # Element not found in Trie
+
+    # Calculate mass of current node's data
+    total_mass = 0
+    for compound in node_current.data:
+        total_mass += compound.get_mass()
+
+    # Recursive call for children `y` and `z`
+    sum_y = recursive_sum(trie, start, y, y, z, depth + 1)
+    sum_z = recursive_sum(trie, start, z, y, z, depth + 1)
+
+    return total_mass + sum_y + sum_z
+
+
+def plot_matrix(matrix, elements):
+    """
+    Plots the summation matrix as a heatmap.
+
+    Args:
+        matrix: A 2D numpy array (matrix) containing the summation values.
+        elements: A list of element names corresponding to the matrix rows and columns.
+    """
+    plt.figure(figsize=(12, 8))
+    plt.imshow(matrix, cmap='viridis', interpolation='nearest')
+    plt.colorbar(label='Summation Value')
+
+    # Update tick labels
+    plt.xticks(ticks=np.arange(len(elements)), labels=elements, rotation=90)
+    plt.yticks(ticks=np.arange(len(elements)), labels=elements)
+    plt.xlabel('Element (Column)', fontsize=12)
+    plt.ylabel('Element (Row)', fontsize=12)
+    plt.title('Recursive Summation Matrix', fontsize=14)
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    # Initialize the Trie
+    trie = Trie()
+
+    # Load element data from file (Update file path accordingly)
+    file_name = "Data/elements_table_v20.txt"
+    try:
+        trie = trie.read_in_dictionary(file_name)
+
+        # Get all elements from the trie
+        elements = trie.get_words()
+
+        # Define x, y, z
+        x = elements[0] if elements else None  # Starting element (e.g., first from the list)
+        y = "H"  # Example element to sum recursively
+        z = "O"  # Another example element to sum recursively
+
+        if x is None:
+            print("No valid elements found in the Trie.")
+            return
+
+        # Create summation matrix
+        matrix = create_summation_matrix(trie, elements, x, y, z)
+
+        # Plot the resulting matrix
+        plot_matrix(matrix, elements)
+
+    except FileNotFoundError:
+        print(f"File {file_name} not found. Please provide a valid file path.")
+
+
+# Call the main function
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+### Explanation of Components:
+1. **`create_summation_matrix`**:
+   - Constructs a square matrix where each cell at `(i, j)` represents recursive sums starting from specific elements `x`, `y`, and `z`.
+
+2. **`recursive_sum`**:
+   - Recursively computes the total mass for nodes corresponding to elements `y` and `z`.
+
+3. **`plot_matrix`**:
+   - Uses `matplotlib` to display the created matrix as a heatmap, with element names labeled along the axes.
+
+4. **Integration in Main**:
+   - The file is loaded, elements are processed, and `x`, `y`, and `z` are defined.
+   - A summation matrix is created and plotted.
+
+---
+
+### Output
+- A Cartesian heatmap of the recursive sums visualizing the relationships based on the periodic elements.
+
+---
+
+You can integrate this into your setup and adjust parameters (`x`, `y`, `z`) and recursion logic as needed. Let me know if you need further clarification!
+
+User: 
+Please reformat the plot so each letter does not overlap one another
+
+Assistant: 
+To fix the issue of overlapping labels in the plot, you can increase the spacing between the rows and columns by adjusting the **tick label size** and spacing. Additionally, using `matplotlib`'s `tight_layout` and rotating the labels effectively will make sure no labels overlap with others.
+
+Here’s the updated function for plotting the matrix:
+
+```python
+def plot_matrix(matrix, elements):
+    """
+    Plots the summation matrix as a heatmap with adjusted spacing 
+    between labels to avoid overlap.
+    
+    Args:
+        matrix: A 2D numpy array (matrix) containing the summation values.
+        elements: A list of element names corresponding to the matrix rows and columns.
+    """
+    plt.figure(figsize=(14, 10))  # Increase figure size for better spacing
+    plt.imshow(matrix, cmap='viridis', interpolation='nearest')  # Heatmap
+    cbar = plt.colorbar(label='Summation Value')  # Add color bar for context
+    
+    # Update tick labels with spacing
+    plt.xticks(ticks=np.arange(len(elements)), labels=elements, rotation=45, ha='right', fontsize=10)
+    plt.yticks(ticks=np.arange(len(elements)), labels=elements, fontsize=10)
+    
+    # Add axis titles and matrix title
+    plt.xlabel('Element (Column)', fontsize=12)
+    plt.ylabel('Element (Row)', fontsize=12)
+    plt.title('Recursive Summation Matrix', fontsize=16, pad=20)
+
+    # Adjust layout to avoid label overlap
+    plt.tight_layout()  # Automatically adjusts padding to avoid overlaps
+    plt.show()
+```
+
+---
+
+### Changes Made:
+1. **Figure Size Adjustments**:
+   - Increased figure size using `plt.figure(figsize=(14, 10))` for better spacing between labels.
+
+2. **Tick Label Rotation and Alignment**:
+   - Used `rotation=45` and `ha='right'` to rotate the x-axis tick labels to 45 degrees, aligning them to the right to prevent overlap.
+
+3. **Font Size**:
+   - Adjusted tick label font size to `fontsize=10` for both `xticks` and `yticks`.
+
+4. **Tight Layout**:
+   - Used `plt.tight_layout()` to automatically adjust padding around the plot and ensure no overlapping elements.
+
+---
+
+### Expected Output:
+1. **Clean Visualization**:
+   - Each element name on the axes will be clearly visible, with no overlapping labels.
+   
+2. **Readable Spacing**:
+   - The chart will have enough padding to separate elements, and the matrix visualization will take up an appropriate amount of space.
+
+3. **Professional Look**:
+   - Clear colors, axis titles, and labels make the plot ready to use for analysis.
+
+---
+
+### Integrating the Updated Plot
+Replace the `plot_matrix` function in the code provided earlier with this updated version, and the plot will display properly without any label overlapping issues.
+
+If you need further improvements or customizations (e.g., larger gridlines, custom color mapping), let me know!
+
+User: 
+Adjust the plot size so it is viewable in full screen 1080p spacing the labels so as to not overlap
+
+Assistant: 
+To make the plot optimized for full-screen viewing in **1080p resolution** (1920x1080 pixels) while ensuring the labels don't overlap, we need to:
+1. Adjust the figure size proportional to the resolution and aspect ratio.
+2. Ensure labels are spaced appropriately using rotation, alignment, and font adjustments.
+3. Use padding adjustments with `plt.tight_layout()` to ensure the plot fits the space effectively without cropping or overlapping.
+
+Here's the updated `plot_matrix` function:
+
+---
+
+```python
+def plot_matrix(matrix, elements):
+    """
+    Plots the summation matrix as a heatmap optimized for 1080p full-screen viewing.
+    
+    Args:
+        matrix: A 2D numpy array (matrix) containing the summation values.
+        elements: A list of element names corresponding to the matrix rows and columns.
+    """
+    plt.figure(figsize=(19, 10))  # Set figure size to match 1080p viewing (aspect ratio 16:9)
+
+    # Add heatmap visualization
+    plt.imshow(matrix, cmap='viridis', interpolation='nearest')  
+    cbar = plt.colorbar(label='Summation Value')  # Add a color bar
+    
+    # Customize tick labels with spacing, font size, and rotation
+    plt.xticks(ticks=np.arange(len(elements)), labels=elements, rotation=60, ha='right', fontsize=12)
+    plt.yticks(ticks=np.arange(len(elements)), labels=elements, fontsize=12)
+    
+    # Add axis titles and matrix title
+    plt.xlabel('Element (Columns)', fontsize=14, labelpad=20)  # Add padding for clarity
+    plt.ylabel('Element (Rows)', fontsize=14, labelpad=20)
+    plt.title('Recursive Summation Matrix', fontsize=18, pad=30)
+
+    # Adjust layout to make full use of space and avoid label overlap
+    plt.tight_layout(pad=3.0)  # Add extra padding if needed for labels or color bar
+    plt.show()
+```
+
+---
+
+### Key Adjustments:
+1. **Figure Size**:
+   - The `plt.figure(figsize=(19, 10))` corresponds to a size of **1900x1000 pixels**, filling most of a 1080p screen while maintaining a standard 16:9 aspect ratio.
+
+2. **Improved Label Rotation**:
+   - Increased the x-label rotation to `60 degrees` for better readability.
+   - Used `ha='right'` to align the rotated labels properly.
+
+3. **Font Size Adjustments**:
+   - Tick labels are set to `fontsize=12` for better readability on larger screens.
+   - Axis titles are slightly larger with `fontsize=14`.
+
+4. **Padding Customization**:
+   - Used `labelpad=20` for x and y-axis titles to add some distance from axis ticks and labels.
+   - Adjusted the layout automatically with `plt.tight_layout(pad=3.0)` to avoid any overlaps between labels, axes, and the color bar.
+
+---
+
+### 1080p Full-Screen View
+When you run this code, the plot:
+1. Will appear at a full-screen size suitable for a 1080p display.
+2. Will have readable tick labels, spaced out to avoid any overlap.
+3. Will look clean and presentable, with a properly aligned color bar and labels.
+
+If you want me to adapt this further (e.g., target other resolutions or require specialized scaling), let me know!
+
+User: 
+The labels are still bunched together please increase the padding
+
+Assistant: 
+To further increase spacing and ensure labels are not bunched together, we will:
+1. **Increase padding explicitly for x-axis and y-axis labels**.
+2. **Add grid lines or axis separation** for better visual spacing.
+3. Increase the figure size even more while maintaining a 16:9 aspect ratio.
+4. Explicitly space the labels using `plt.tight_layout` with a larger `pad` value and by adjusting figure margins.
+
+Here is the revised function with additional spacing for the labels:
+
+---
+
+```python
+def plot_matrix(matrix, elements):
+    """
+    Plots the summation matrix as a heatmap optimized for full-screen 1080p viewing, with increased padding 
+    to ensure labels are spaced and clearly visible.
+    
+    Args:
+        matrix: A 2D numpy array (matrix) containing the summation values.
+        elements: A list of element names corresponding to the matrix rows and columns.
+    """
+    plt.figure(figsize=(24, 14))  # Larger figure size for extra spacing (16:9 ratio)
+
+    # Heatmap visualization
+    plt.imshow(matrix, cmap='viridis', interpolation='nearest')
+    cbar = plt.colorbar(label='Summation Value')  # Add the color bar
+
+    # Adjust tick labels for x and y axes with clearer spacing
+    plt.xticks(ticks=np.arange(len(elements)), labels=elements, rotation=75, ha='right', fontsize=12)
+    plt.yticks(ticks=np.arange(len(elements)), labels=elements, fontsize=12)
+
+    # Add axis labels and title with extra spacing
+    plt.xlabel('Element (Columns)', fontsize=16, labelpad=40)  # Increase label padding
+    plt.ylabel('Element (Rows)', fontsize=16, labelpad=40)
+    plt.title('Recursive Summation Matrix', fontsize=22, pad=50)  # Add extra padding to title
+
+    # Adjust layout to minimize overlap
+    plt.tight_layout(pad=8.0)  # Higher padding for tight layout
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)  # Adjust figure margins
+
+    # Display the matrix plot
+    plt.show()
+```
+
+---
+
+### Key Adjustments:
+1. **Increased Figure Size**:
+   - The figure size is increased to `24x14` inches to provide maximum space for labels.
+
+2. **Tick Labels Rotation**:
+   - Rotated x-axis labels further to `75 degrees` for better clarity.
+   - Used `ha='right'` to ensure the labels align properly with the ticks.
+
+3. **Label Padding**:
+   - Increased the label padding explicitly using `labelpad=40` for the x and y labels to separate them further from the matrix.
+   - Added more space to the title using `pad=50` to elevate it.
+
+4. **Tight Layout Padding**:
+   - Significantly increased the padding using `plt.tight_layout(pad=8.0)` to ensure no overlapping between labels and the plot.
+
+5. **Manual Margin Adjustment**:
+   - Used `plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)` to ensure labels do not overlap with the edges of the plot or the color bar.
+
+---
+
+### Expected Improvements:
+- Labels for rows and columns will now have ample spacing, and x-labels will appear diagonal and non-overlapping.
+- The overall plot will make better use of a full screen in 1080p resolution.
+- The heatmap will remain centered, with a readable color bar and title.
+
+If the labels still appear tight, you can fine-tune the `bottom` and `top` values in `plt.subplots_adjust()` or further increase the figure size. Let me know if you'd like to adjust this further!
+
+User: 
+please update the gradient to include more of the coloured spectrum of roygbiv\
+
+Assistant: 
+To update the heatmap to include more of the color spectrum, such as ROYGBIV (Red, Orange, Yellow, Green, Blue, Indigo, Violet), we can use a diverging colormap from **Matplotlib** that spans a wide range of colors (e.g., `'plasma'`, `'rainbow'`, or `'Spectral'`). These colormaps provide more of the rainbow spectrum for visualization.
+
+Here’s the updated version of the `plot_matrix` function to include the ROYGBIV spectrum:
+
+---
+
+```python
+def plot_matrix(matrix, elements):
+    """
+    Plots the summation matrix as a heatmap using a ROYGBIV-like color spectrum, optimized for full-screen 1080p viewing, 
+    with increased padding to ensure labels are spaced and clearly visible.
+    
+    Args:
+        matrix: A 2D numpy array (matrix) containing the summation values.
+        elements: A list of element names corresponding to the matrix rows and columns.
+    """
+    plt.figure(figsize=(24, 14))  # Larger figure size for extra spacing (16:9 ratio)
+
+    # Heatmap visualization with updated ROYGBIV colormap ('rainbow')
+    plt.imshow(matrix, cmap='rainbow', interpolation='nearest')
+    cbar = plt.colorbar(label='Summation Value')  # Add the color bar
+
+    # Adjust tick labels for x and y axes with clearer spacing
+    plt.xticks(ticks=np.arange(len(elements)), labels=elements, rotation=75, ha='right', fontsize=12)
+    plt.yticks(ticks=np.arange(len(elements)), labels=elements, fontsize=12)
+
+    # Add axis labels and title with extra spacing
+    plt.xlabel('Element (Columns)', fontsize=16, labelpad=40)  # Increase label padding
+    plt.ylabel('Element (Rows)', fontsize=16, labelpad=40)
+    plt.title('Recursive Summation Matrix', fontsize=22, pad=50)  # Add extra padding to title
+
+    # Adjust layout to minimize overlap
+    plt.tight_layout(pad=8.0)  # Higher padding for tight layout
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.2)  # Adjust figure margins
+
+    # Display the matrix plot
+    plt.show()
+```
+
+---
+
+### Key Updates:
+1. **Colormap Change**:
+   - Changed the colormap to `'rainbow'` using `cmap='rainbow'`. The `'rainbow'` colormap spans the full ROYGBIV spectrum.
+   - You can replace `'rainbow'` with other similar colormaps like `'Spectral'`, `'plasma'`, or `'viridis'` for alternative gradient effects over the color spectrum.
+
+2. **Improved Visual Gradients**:
+   - The color bar now better represents the relationship between the matrix values and increases visual differentiation.
+
+---
+
+### Additional Notes on Colormaps
+- **`'rainbow'` colormap**:
+    - Includes the full visible color spectrum.
+    - Good for visualizing gradients across datasets.
+
+- **`'Spectral'` colormap**:
+    - Another diverging colormap with a stronger range of reds and blues.
+    - Can be used similarly if you want stronger emphasis on extremes.
+
+---
+
+### Example Visualization with `'rainbow'`:
+Your updated heatmap will now range through bright rainbow-style colors, making it clear where the highest and lowest values are, and allowing for a more visually appealing representation of the data. Let me know if you'd like to customize it further!
+
+User: 
+Now create another graph that computes the sum of element x to y and z and displays the sum values in a table matrix of each node of x y and z elements
+
+Assistant: 
+To create another graph that computes the sum of element `x` to `y` and `z`, and then displays the resulting values in a table-like matrix, we'll do the following:
+
+1. **Compute a 3D Table or Matrix**:
+   - Each cell will represent the sum of `x`, `y`, and `z` for each combination of elements.
+   - The matrix dimensions will essentially be 3D: rows for `x`, columns for `y`, and each block (or layer) corresponding to `z`.
+
+2. **Visualize the Sum**:
+   - Display each table or matrix for a specific value of `z`.
+   - Add annotations inside the table to show the actual computed sum values.
+
+3. **Generate Tables**:
+   - For simplicity, if there are `n` total elements, we will produce `n` 2D tables (one for each `z`).
+
+Here is the Python implementation:
+
+---
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+def compute_and_plot_sum_tables(elements):
+    """
+    Computes the sum of element x, y, and z and displays the sum values
+    in a table-like matrix for each combination of x, y, and z elements.
+    
+    Args:
+        elements: A list of element names. The corresponding numeric values
+                  are assigned as sequential integers (e.g., 1, 2, 3, ...).
+    """
+    # Assign numeric values to each element
+    element_values = np.arange(1, len(elements) + 1)
+    
+    # Create an empty 3D matrix to store sums for each combination of x, y, z
+    n = len(elements)
+    sum_matrix = np.zeros((n, n, n))
+    
+    # Compute the summation table for all x, y, z combinations
+    for x in range(n):
+        for y in range(n):
+            for z in range(n):
+                sum_matrix[x, y, z] = element_values[x] + element_values[y] + element_values[z]
+    
+    # Now plot the 2D sum table for each fixed z value
+    for z in range(n):
+        plt.figure(figsize=(12, 8))
+        plt.title(f"Sum Matrix for z={elements[z]} (Value={element_values[z]})", fontsize=16, pad=20)
+        plt.imshow(sum_matrix[:, :, z], cmap='rainbow', interpolation='nearest')
+        plt.colorbar(label="Summation Value")
+
+        # Set up axis labels
+        plt.xticks(ticks=np.arange(n), labels=elements, fontsize=10, rotation=45, ha='right')
+        plt.yticks(ticks=np.arange(n), labels=elements, fontsize=10)
+        plt.xlabel("y Element (Columns)", fontsize=12, labelpad=10)
+        plt.ylabel("x Element (Rows)", fontsize=12, labelpad=10)
+        
+        # Annotate the heatmap with the actual sum values
+        for i in range(n):
+            for j in range(n):
+                plt.text(
+                    j, i, f"{int(sum_matrix[i, j, z])}",  # Display the value
+                    ha="center", va="center", color="black", fontsize=9
+                )
+        
+        # Add spacing and show the plot
+        plt.tight_layout(pad=4)
+        plt.show()
+```
+
+---
+
+### Explanation of the Code:
+1. **Numeric Values for Elements**:
+   - Each element in the `elements` list is assigned sequential numeric values (e.g., 1, 2, 3, ...).
+   - The `sum_matrix` computes the sum of these numeric values for all combinations of `x`, `y`, and `z`.
+
+2. **3D Matrix**:
+   - The matrix `sum_matrix[x, y, z]` stores the sum `element_x + element_y + element_z`.
+
+3. **Plotting for Each `z`**:
+   - For each `z` value, a 2D matrix is extracted and plotted.
+   - Element labels (e.g., names from the `elements` list) are used for both the x-axis and y-axis.
+
+4. **Annotations**:
+   - Each cell in the plotted heatmap contains the computed sum value.
+
+5. **Visualization**:
+   - A color-coded heatmap for each fixed `z` value, with color intensity representing the numerical sum.
+
+---
+
+### Example Usage:
+
+Given the elements:
+
+```python
+elements = ["A", "B", "C", "D"]
+compute_and_plot_sum_tables(elements)
+```
+
+### Expected Output:
+1. **Tables/Heatmaps**:
+   - A series of heatmaps where each table corresponds to a fixed `z` value.
+   - Rows represent `x`, columns represent `y`, and the cell values/annotations represent the sum of `x`, `y`, and `z`.
+
+2. **Example Table Interpretation**:
+   - In the table where `z = A` (numeric value = 1):
+     - The value at the cell (`x = A`, `y = B`) will be `1 (A) + 2 (B) + 1 (z = A) = 4`.
+
+---
+
+Let me know if you need further adjustments!
+
+User: 
+Yes run the function in main
+
+User: 
+Apply gridlines with a padding of white space between each cell
+
