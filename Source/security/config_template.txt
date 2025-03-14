@@ -1,0 +1,20 @@
+[watson]
+watson_nlu_key = {etc}
+watson_nlu_url = {etc}
+[proxy]
+http_proxy = {etc}
+https_proxy = {etc}
+ssl_proxy = {etc}
+username = {etc}
+password = {etc}
+[keymanager]
+keymanager = {etc}
+[cloud.mongodb]
+connection_url = mongodb+srv://%s:%s@{YOUR_USER_DB}.{YOUR_OWN_SERVER}
+
+    [[databases]]
+    databasename = {etc}
+
+    [[credential_manager]]
+    username = {etc}
+    password = {etc}
