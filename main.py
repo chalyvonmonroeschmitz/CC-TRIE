@@ -68,9 +68,9 @@ def main():
         elements = trie.get_words()
 
         # Define x, y, z
-        x = elements[0] if elements else None  # Starting element (e.g., first from the list)
+        x = trie.get_node("He").data[0].symbol if elements else None  # Starting element (e.g., first from the list)
         y = "H"  # Example element to sum recursively
-        z = "O"  # Another example element to sum recursively
+        z = "U"  # Another example element to sum recursively
 
         if x is None:
             print("No valid elements found in the Trie.")
@@ -78,11 +78,10 @@ def main():
 
         # Create summation matrix
         matrix = CC_Trie.create_summation_matrix(trie, elements, x, y, z)
-
         # Plot the resulting matrix
         CC_Trie.plot_matrix(matrix, elements)
-        # compute sum tables x y z elements
-        CC_Trie.compute_and_plot_sum_tables(elements)
+        # compute sum tables x y z for element x
+        CC_Trie.plot_sum_for_single_element_x(elements, x)
 
     except FileNotFoundError:
         print(f"File {file_name} not found. Please provide a valid file path.")

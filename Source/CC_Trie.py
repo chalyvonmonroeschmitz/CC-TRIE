@@ -169,7 +169,7 @@ class Trie:
             print(f"Error: {e}")
         return trie
 
-def plot_element_masses(trie):
+def chart_elements_mass(trie):
     """
     Plots a Cartesian graph of chemical elements and their corresponding masses.
     """
@@ -197,6 +197,41 @@ def plot_element_masses(trie):
     plt.tight_layout()
     plt.show()
     plt.close()
+
+    # return summations
+    return element_masses
+
+def chart_element_mass(trie, element):
+    """
+       Plots a Cartesian graph of chemical elements and their corresponding masses.
+       """
+    elements = trie.get_words()  # Get all element formulas from the trie
+    element_masses = {}
+
+    # Sum up masses for each element
+    for e in elements:
+        node = trie.get(e)
+        if node and node.data:  # Ensure the node has data
+            total_mass = trie.get(element).data[0].mass + sum(compound.get_mass() for compound in node.data)
+            element_masses[e] = total_mass
+
+    # Sort elements alphabetically for better visualization
+    sorted_elements = sorted(element_masses.keys())
+    sorted_masses = [element_masses[element] for element in sorted_elements]
+
+    # Plot the Cartesian graph
+    plt.figure(figsize=(12, 6))
+    plt.bar(sorted_elements, sorted_masses, color='skyblue')
+    plt.xlabel('Element Formula', fontsize=12)
+    plt.ylabel('Total Mass', fontsize=12)
+    plt.title(f"Compound Mass Distribution for {element}", fontsize=14)
+    plt.xticks(rotation=90, fontsize=10)
+    plt.tight_layout()
+    plt.show()
+    plt.close()
+
+    # returns array of the summations
+    return element_masses
 
 
 def create_summation_matrix(trie, elements, x, y, z):
@@ -391,21 +426,25 @@ def main():
         # Get all elements from the trie
         elements = trie.get_words()
 
-        # Define x, y, z
-        x = trie.get_node("He").data[0].symbol if elements else None  # Starting element (e.g., first from the list)
-        y = "H"  # Example element to sum recursively
-        z = "U"  # Another example element to sum recursively
+        compound_weights = chart_element_mass(trie, "Na")
+        print(compound_weights)
 
-        if x is None:
-            print("No valid elements found in the Trie.")
-            return
 
-        # Create summation matrix
-        matrix = create_summation_matrix(trie, elements, x, y, z)
-        # Plot the resulting matrix
-        plot_matrix(matrix, elements)
-        # compute sum tables x y z for element x
-        plot_sum_for_single_element_x(elements, x)
+        # # Define x, y, z
+        # x = trie.get_node("He").data[0].symbol if elements else None  # Starting element (e.g., first from the list)
+        # y = "H"  # Example element to sum recursively
+        # z = "U"  # Another example element to sum recursively
+        #
+        # if x is None:
+        #     print("No valid elements found in the Trie.")
+        #     return
+        #
+        # # Create summation matrix
+        # matrix = create_summation_matrix(trie, elements, x, y, z)
+        # # Plot the resulting matrix
+        # plot_matrix(matrix, elements)
+        # # compute sum tables x y z for element x
+        # plot_sum_for_single_element_x(elements, x)
 
     except FileNotFoundError:
         print(f"File {file_name} not found. Please provide a valid file path.")
