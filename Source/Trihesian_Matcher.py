@@ -44,7 +44,7 @@ def main():
     google_scraper.google_scraper(google_scraper, search, region)
 
     # Load element data from file (Update file path accordingly)
-    file_name = "Data/elements_table_v20.txt"
+    file_name = "../Data/elements_table_v20.txt"
     try:
         trie = trie.read_in_dictionary(file_name)
     except FileNotFoundError:

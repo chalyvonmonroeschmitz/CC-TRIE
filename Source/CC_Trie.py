@@ -430,21 +430,21 @@ def main():
         print(compound_weights)
 
 
-        # # Define x, y, z
-        # x = trie.get_node("He").data[0].symbol if elements else None  # Starting element (e.g., first from the list)
-        # y = "H"  # Example element to sum recursively
-        # z = "U"  # Another example element to sum recursively
-        #
-        # if x is None:
-        #     print("No valid elements found in the Trie.")
-        #     return
-        #
-        # # Create summation matrix
-        # matrix = create_summation_matrix(trie, elements, x, y, z)
-        # # Plot the resulting matrix
-        # plot_matrix(matrix, elements)
-        # # compute sum tables x y z for element x
-        # plot_sum_for_single_element_x(elements, x)
+        # Define x, y, z
+        x = trie.get_node("He").data[0].symbol if elements else None  # Starting element (e.g., first from the list)
+        y = "H"  # Example element to sum recursively
+        z = "U"  # Another example element to sum recursively
+
+        if x is None:
+            print("No valid elements found in the Trie.")
+            return
+
+        # Create summation matrix
+        matrix = create_summation_matrix(trie, elements, x, y, z)
+        # Plot the resulting matrix
+        plot_matrix(matrix, elements)
+        # compute sum tables x y z for element x
+        plot_sum_for_single_element_x(elements, x)
 
     except FileNotFoundError:
         print(f"File {file_name} not found. Please provide a valid file path.")

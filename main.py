@@ -1,6 +1,8 @@
+import argparse
 import math
 import CC_Trie
 from CC_Trie import Trie
+import Trihesian_Matcher
 
 
 class EnhancedTrieWithGraph(Trie):
@@ -35,10 +37,8 @@ class EnhancedTrieWithGraph(Trie):
 
                     # Calculate the formula
                     formula_result = (
-                                             3 * (
-                                             sum(d) + sum(i) + sum(h)
-                                     ) + 50
-                                     ) * (1 / math.pi) / 1000
+                        3 * (sum(d) + sum(i) + sum(h)) + 50
+                    ) * (1 / math.pi) / 1000
 
                     # Add the result to the matrix graph
                     matrix_graph[current_node_key]["results"].append({
@@ -54,9 +54,10 @@ class EnhancedTrieWithGraph(Trie):
         return matrix_graph
 
 
-
-def main():
-    # Initialize the Trie
+def run_cc_trie():
+    """
+    Function to run the CC_Trie script functionality.
+    """
     trie = Trie()
 
     # Load element data from file (Update file path accordingly)
@@ -80,12 +81,35 @@ def main():
         matrix = CC_Trie.create_summation_matrix(trie, elements, x, y, z)
         # Plot the resulting matrix
         CC_Trie.plot_matrix(matrix, elements)
-        # compute sum tables x y z for element x
+        # Compute sum tables x, y, z for element x
         CC_Trie.plot_sum_for_single_element_x(elements, x)
 
     except FileNotFoundError:
         print(f"File {file_name} not found. Please provide a valid file path.")
 
-# Call the main function to run the tests
+
+def run_trihesian_matcher():
+    """
+    Function to run the Trihesian_matcher script functionality.
+    """
+    Trihesian_Matcher.run_matcher()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run CC_Trie or Trihesian_matcher scripts with specified functions.")
+    parser.add_argument("--mode", required=True, choices=["CC_Trie", "Trihesian_matcher"],
+                        help="Specify the script to run: 'CC_Trie' or 'Trihesian_matcher'.")
+    parser.add_argument("--function", required=False, help="Specify the function to run within the script.")
+
+    args = parser.parse_args()
+
+    if args.mode == "CC_Trie":
+        run_cc_trie()
+    elif args.mode == "Trihesian_matcher":
+        run_trihesian_matcher()
+    else:
+        print("Invalid mode specified. Use --help for usage information.")
+
+
 if __name__ == "__main__":
     main()
