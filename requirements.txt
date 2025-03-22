@@ -1,0 +1,16 @@
+numpy
+matplotlib
+seaborn
+pandas
+urllib
+PIL
+ibm_cloud_sdk_core
+ibm_watson.natural_language_understanding_v1
+pytesseract
+selenium
+classes.archiver
+sys
+re
+maths
+Trie
+google_scraper
